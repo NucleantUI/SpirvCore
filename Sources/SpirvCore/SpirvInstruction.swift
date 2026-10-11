@@ -3,6 +3,9 @@
 //  SpirvCore
 //
 
+/// A SPIR-V result id.
+public typealias SpirvId = UInt32
+
 /// One SPIR-V instruction. Encodes to `[UInt32]` as `(wordCount << 16 | opcode)` followed by operands.
 public struct SpirvInstruction: Sendable {
     public var op: SpirvOp

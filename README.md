@@ -52,12 +52,46 @@ instruction throws `SpirvReadError`.
 
 ## What's in the tables
 
-`SpirvOp` and the enums beside it (`GLSLstd450`, `SpirvCapability`,
-`SpirvStorageClass`, `SpirvDecoration`, `SpirvBuiltIn`, `SpirvDim`,
-`SpirvImageFormat`, execution/loop/selection control, …) cover the subset of
-SPIR-V 1.0 that PyShader emits and its decompiler reads, with values taken
-straight from the Khronos `spirv.core.grammar`. Not the whole instruction set;
-adding a case is a one-line change.
+The tables are the whole of the Khronos grammar, SPIR-V 1.6 revision 7
+(SPIRV-Headers `86f980c`, 2026-10-02), generated from it rather than written
+by hand:
+
+- `SpirvOp` — all 878 core instructions, extension and vendor ones included,
+  with `hasResult` / `hasResultType` for indexing a module by result id.
+- `GLSLstd450` — the complete GLSL.std.450 set.
+- One enum per value kind (`SpirvCapability`, `SpirvStorageClass`,
+  `SpirvDecoration`, `SpirvBuiltIn`, `SpirvExecutionMode`, `SpirvScope`,
+  `SpirvGroupOperation`, `SpirvImageFormat`, …), 42 in all.
+- One `OptionSet` per mask kind (`SpirvImageOperands`,
+  `SpirvMemorySemantics`, `SpirvMemoryAccess`, `SpirvLoopControl`, …), 16 in
+  all, each with `.all` for the bits the grammar defines.
+
+Every case's doc comment carries what the grammar says about it: required
+capabilities, the SPIR-V version that introduced it, and the extension for
+non-core ones. Alternate spellings the grammar lists (`opSDotKHR`,
+`SpirvMemorySemantics.none`) are static members that resolve to the one case.
+
+OpenCL-only and vendor entries are in too, with their requirements in the doc
+comment. An opcode newer than the pinned grammar still reads: `op` is nil and
+`opcode` holds the number.
+
+## Regenerating
+
+The generated Swift in `Sources/SpirvCore/Generated/` is checked in, so the
+package builds without any tool. To rebuild it from the pinned grammar in
+`Grammar/`:
+
+```
+swift Tools/GenerateTables.swift           # rewrite the generated files
+swift Tools/GenerateTables.swift --check   # exit 1 if they differ from the grammar
+```
+
+To move to a newer grammar, replace the two JSON files in `Grammar/` with the
+`unified1` copies from a SPIRV-Headers commit, update `grammarCommit` and
+`grammarCommitDate` at the top of the generator, run it, and run the tests:
+they read the same JSON separately and fail on any case that is missing, extra,
+or has a different value, and on a grammar kind the tests have no Swift type
+for.
 
 `halfBits` / `floatFromHalfBits` convert to and from IEEE 754 binary16 by hand,
 since `Float16` is unavailable on x86_64 macOS.
