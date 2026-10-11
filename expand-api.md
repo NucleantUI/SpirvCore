@@ -33,15 +33,16 @@ and checks every instruction, every value-enum case (both directions), every
 mask's bit set, GLSL.std.450, `hasResult`, plus a block of literal values taken
 from the specification rather than the file.
 
-## Open: downstream, when PyShader next bumps SpirvCore
+## Done: downstream
 
-- `PyShader/Sources/Spirv2PyShader/Decompile/ModuleAnalysis.swift`
-  (`modelName`) switches over `SpirvExecutionModel` with no `default`. The enum
-  has 17 cases now, so that switch stops compiling at the bump. It needs a
-  `default:` arm (the `nil` arm stays).
-- `Spirv2PyShader/Decompile/FunctionScan.swift` has its own hand-written
-  `hasResult(_ op:)`. It can become `op.hasResult` once the two are confirmed
-  to agree.
+PyShader builds against these tables as of PyShader `12569ab`. Spirv2PyShader's
+`modelName` names any known stage now. Its hand-written `hasResult(_:)`, which
+treated every opcode off its list as a value, is replaced by `hasResultType`.
+Once the barrier and demote opcodes had names, the hand-written version read
+them as values and trapped on the zero-operand ones.
+
+What PyShader can build on the full tables is in PyShader's own
+`expand-api.md`.
 
 ## Open: API shape, not table size
 
